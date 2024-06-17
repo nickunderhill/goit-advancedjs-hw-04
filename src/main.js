@@ -14,6 +14,10 @@ function init() {
   let page = 1;
   const perPage = 40;
 
+  const lightbox = new SimpleLightbox('.gallery a', {
+    captionsData: 'alt',
+  });
+
   loadMoreBtn.style.display = 'none';
   form.addEventListener('submit', onFormSubmit);
   loadMoreBtn.addEventListener('click', fetchImages);
@@ -22,6 +26,12 @@ function init() {
     e.preventDefault();
     gallery.innerHTML = '';
     searchQuery = e.target.searchQuery.value.trim();
+    if (searchQuery.length < 1) {
+      showWarning("Search input must not be empty!")
+      e.target.searchQuery.value = '';
+      loadMoreBtn.style.display = 'none';
+      return;
+    }
     page = 1;
     await fetchImages();
   }
@@ -37,6 +47,7 @@ function init() {
 
   function handleResponse(data) {
     if (data.totalHits === 0) {
+      loadMoreBtn.style.display = 'none';
       showError('Sorry, there are no images matching your search query. Please try again.');
       return;
     }
@@ -49,8 +60,8 @@ function init() {
       scrollPage();
     }
 
-    page += 1;
     toggleLoadMoreButton(data.totalHits);
+    page += 1;
   }
 
   function handleError(error) {
@@ -61,7 +72,7 @@ function init() {
   function renderImages(images) {
     const markup = images.map(createImageCard).join('');
     gallery.insertAdjacentHTML('beforeend', markup);
-    refreshLightbox();
+    lightbox.refresh();
   }
 
   function createImageCard({ webformatURL, largeImageURL, tags, likes, views, comments, downloads }) {
@@ -78,14 +89,6 @@ function init() {
           </div>
       </div>
     `;
-  }
-
-  function refreshLightbox() {
-    const lightbox = new SimpleLightbox('.gallery a', {
-      captionDelay: 250,
-      captionsData: 'alt',
-    });
-    lightbox.refresh();
   }
 
   function scrollPage() {
@@ -124,6 +127,15 @@ function init() {
   function showInfo(message) {
     iziToast.info({
       title: 'Info',
+      position: 'topRight',
+      message: message,
+    });
+  }
+
+
+  function showWarning(message) {
+    iziToast.warning({
+      title: 'Warning',
       position: 'topRight',
       message: message,
     });
